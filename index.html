@@ -73,6 +73,8 @@ button{font-family:var(--font-body);color:inherit}
 .product-price s,.lightbox-price s{color:var(--color-text-light);opacity:.7;margin-right:.4rem;font-size:.85em}
 .scask{display:block;font-family:var(--font-body);font-size:.7rem;font-style:italic;letter-spacing:.03em;color:var(--color-text-light);margin-top:.1rem}
 .ask{font-style:italic;font-size:.92em}
+.wa-btn{display:inline-flex;align-items:center;gap:.5rem;background:#25d366;color:#fff;text-decoration:none;border-radius:999px;padding:.6rem 1.3rem;font-size:.85rem;letter-spacing:.04em;margin:.2rem 0 .9rem;box-shadow:0 4px 14px rgba(37,211,102,.3)}
+.wa-btn:hover{background:#1ebe5b}
 .product-badge.new{background:var(--color-accent-dark)}
 .product-badge{position:absolute;top:.75rem;left:.75rem;padding:.3rem .8rem;border-radius:25px;background:rgba(45,45,45,.8);color:#fff;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
 .empty{text-align:center;color:var(--color-text-light);padding:3rem 1rem;font-style:italic;font-family:var(--font-display)}
@@ -316,7 +318,7 @@ button{font-family:var(--font-body);color:inherit}
 <footer class="footer">
   <div class="footer-content glass-card">
     <div class="footer-brand"><h3>Fox in Love</h3><p data-t="slogan">L'eleganza che fa la differenza</p><p class="footer-link" style="margin-top:.75rem"><a id="footAbout" data-t="about" style="cursor:pointer;color:var(--color-accent-dark)">Chi Siamo</a></p></div>
-    <div class="footer-contacts"><h4 data-t="contatti">Contatti</h4><ul><li><span class="icon">✉</span><a href="mailto:foxinlove57@gmail.com">foxinlove57@gmail.com</a></li></ul></div>
+    <div class="footer-contacts"><h4 data-t="contatti">Contatti</h4><ul><li><span class="icon">✉</span><a href="mailto:foxinlove57@gmail.com">foxinlove57@gmail.com</a></li><li><span class="icon">☎</span><a href="https://wa.me/393482595447" target="_blank" rel="noopener">WhatsApp +39 348 259 5447</a></li></ul></div>
     <div class="footer-hours"><h4 data-t="orari">Orari</h4><p data-t="h1">Lun - Sab: 10:00 - 19:00</p><p data-t="h2">Dom: Su appuntamento</p></div>
   </div>
   <div class="footer-bottom">© 2026 Fox in Love. <span data-t="rights">Tutti i diritti riservati.</span></div>
@@ -337,6 +339,7 @@ button{font-family:var(--font-body);color:inherit}
         <span class="lightbox-ref" id="lbRef"></span>
         <p class="lightbox-description" id="lbDesc"></p>
         <div id="lbPrice"></div>
+        <a class="wa-btn" id="lbWa" href="#" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.5-3.9-4.7-4.1-.1-.2-1.1-1.5-1.1-2.9s.7-2 1-2.3c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.3.5-.4.4c-.1.1-.3.3-.1.6.2.3.7 1.2 1.6 2 1.1 1 2 1.3 2.3 1.4.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l2 1c.3.1.5.2.5.3.1.1.1.7-.1 1.3z"/></svg><span data-t="waBtn">Chiedi informazioni su WhatsApp</span></a>
         <div class="lightbox-tags" id="lbTags"></div>
         <div class="lb-admin hidden" id="lbAdmin">
           <button class="abtn" id="lbEdit">✎ Modifica</button>
@@ -807,9 +810,25 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     shown = end;
     $("#loader").classList.toggle("hidden", shown >= list.length);
   }
-  new IntersectionObserver((es) => {
-    if (es[0].isIntersecting && shown < list.length && !adminState.reorder) more();
-  }, { rootMargin: "900px" }).observe($("#sentinel"));
+  function checkMore() {
+    if (adminState.reorder || shown >= list.length) return;
+    if ($("#pageCollection").classList.contains("hidden")) return;
+    if ($("#sentinel").getBoundingClientRect().top < window.innerHeight + 1200) {
+      more();
+      requestAnimationFrame(checkMore);
+    }
+  }
+  if ("IntersectionObserver" in window) {
+    new IntersectionObserver((es) => {
+      if (es[0].isIntersecting) checkMore();
+    }, { rootMargin: "900px" }).observe($("#sentinel"));
+  }
+  let scrollT = 0;
+  window.addEventListener("scroll", () => {
+    if (scrollT) return;
+    scrollT = setTimeout(() => { scrollT = 0; checkMore(); }, 150);
+  }, { passive: true });
+  window.addEventListener("resize", checkMore);
   let cur = -1, view = 0;
   function openLB(i) {
     cur = i;
@@ -852,6 +871,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     $("#lbPrice").innerHTML = p.stato === "venduto" ? `<span class="lightbox-price" style="color:#5a5a5a">${T("sold")}</span>` : pr ? `<span class="lightbox-price">${pr}</span>` : "";
     const tags = [...(p.tipo || []).map((t) => lbl(TIPI, t)), p.ras ? T("ras") : null, lbl(MODELLI, p.mod), ...(p.col || []).map((c) => lbl(COLORI, c))].filter(Boolean);
     $("#lbTags").innerHTML = tags.map((t) => `<span>${esc(t)}</span>`).join("");
+    $("#lbWa").href = "https://wa.me/393482595447?text=" + encodeURIComponent(T("waMsg") + " " + p.n + " – " + x.t);
     $("#lbAdmin").classList.toggle("hidden", mode !== "admin");
     $("#lbSold").textContent = p.stato === "venduto" ? "Segna disponibile" : "Segna venduto";
   }
