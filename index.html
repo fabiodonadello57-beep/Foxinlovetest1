@@ -815,7 +815,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     if ($("#pageCollection").classList.contains("hidden")) return;
     if ($("#sentinel").getBoundingClientRect().top < window.innerHeight + 1200) {
       more();
-      requestAnimationFrame(checkMore);
+      setTimeout(checkMore, 60);
     }
   }
   if ("IntersectionObserver" in window) {
