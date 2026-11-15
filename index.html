@@ -3,6 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Fox in Love – Pellicce e giacche di lusso. Cinquant'anni di maestria artigiana.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Fox in Love – Pellicce e giacche di lusso">
+<meta property="og:description" content="Visoni, volpi, persiani e montoni. Cinquant'anni di maestria artigiana.">
+<meta property="og:image" content="https://fabiodonadello57-beep.github.io/Foxinlovetest1/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:url" content="https://fabiodonadello57-beep.github.io/Foxinlovetest1/">
+<meta name="twitter:card" content="summary_large_image">
 <title>Fox in Love | Pellicce & Giacche di Lusso</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -64,6 +73,7 @@ button{font-family:var(--font-body);color:inherit}
 .product-price s,.lightbox-price s{color:var(--color-text-light);opacity:.7;margin-right:.4rem;font-size:.85em}
 .scask{display:block;font-family:var(--font-body);font-size:.7rem;font-style:italic;letter-spacing:.03em;color:var(--color-text-light);margin-top:.1rem}
 .ask{font-style:italic;font-size:.92em}
+.product-badge.new{background:var(--color-accent-dark)}
 .product-badge{position:absolute;top:.75rem;left:.75rem;padding:.3rem .8rem;border-radius:25px;background:rgba(45,45,45,.8);color:#fff;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase}
 .empty{text-align:center;color:var(--color-text-light);padding:3rem 1rem;font-style:italic;font-family:var(--font-display)}
 .sentinel{height:1px}
@@ -259,6 +269,7 @@ button{font-family:var(--font-body);color:inherit}
       <div class="fgroup"><h4 data-t="modello">Modello</h4><div class="pills" id="fModello"></div></div>
       <div class="fgroup"><h4 data-t="colore">Colore</h4><div class="pills" id="fColore"></div></div>
       <div class="fgroup" id="fPrezzoG"><h4 data-t="prezzo">Fascia di prezzo</h4><div class="pills" id="fPrezzo"></div></div>
+      <div class="fgroup"><h4 data-t="taglia">Taglia</h4><div class="pills" id="fTaglia"></div></div>
       <div class="fgroup"><h4 data-t="dett">Dettagli</h4><div class="pills" id="fDett"></div></div>
     </div>
   </div>
@@ -416,6 +427,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     return x ? { t: x[0], d: x[1] } : { t: p.t, d: p.d };
   };
   const VISTE = ["fronte", "lato", "retro"];
+  const TAGLIE = ["38/40", "40/42", "42/44", "44/46", "46/48", "48/50"];
   const lbl = (arr, k) => T(k);
   const BASE = (window.CATALOGO || []).map((p) => __spreadProps(__spreadValues({}, p), { custom: false }));
   let custom = [];
@@ -535,7 +547,6 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   }
   async function initCloud() {
     return;
-    if (!window.claude || !window.claude.use) return;
     if (mode === "link") return;
     let user = null, db = null;
     try {
@@ -638,7 +649,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     linkCfg = null;
     mode = LS.get("admin", false) ? "admin" : "public";
   }
-  const F = { genere: "tutti", tipo: /* @__PURE__ */ new Set(), pelo: /* @__PURE__ */ new Set(), modello: /* @__PURE__ */ new Set(), colore: /* @__PURE__ */ new Set(), prezzo: /* @__PURE__ */ new Set(), dett: /* @__PURE__ */ new Set(), q: "" };
+  const F = { genere: "tutti", tipo: /* @__PURE__ */ new Set(), pelo: /* @__PURE__ */ new Set(), modello: /* @__PURE__ */ new Set(), colore: /* @__PURE__ */ new Set(), prezzo: /* @__PURE__ */ new Set(), dett: /* @__PURE__ */ new Set(), taglia: /* @__PURE__ */ new Set(), q: "" };
   function visibleItems() {
     let arr = allItems();
     if (mode === "link") {
@@ -654,11 +665,16 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   function priceShown() {
     return mode === "admin" ? true : mode === "link" ? linkCfg.showPrice : false;
   }
+  function isNew(p) {
+    return !!p.nuovo || (p.custom && p.created && Date.now() - p.created < 30 * 864e5 && p.nuovo !== false);
+  }
   function matches(p) {
     if (F.genere !== "tutti" && (p.g || "donna") !== F.genere) return false;
     if (F.tipo.size && !(p.tipo || []).some((t) => F.tipo.has(t))) return false;
     if (F.modello.size && !F.modello.has(p.mod)) return false;
     if (F.colore.size && !(p.col || []).some((c) => F.colore.has(c))) return false;
+    if (F.taglia && F.taglia.size && !F.taglia.has(p.taglia || "42/44")) return false;
+    if (F.dett.has("new") && !isNew(p)) return false;
     if (F.dett.has("capp") && !p.capp) return false;
     if (F.dett.has("ras") && !p.ras) return false;
     if (F.dett.has("disp") && p.stato === "venduto") return false;
@@ -673,7 +689,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     return true;
   }
   function filtersActive() {
-    return F.genere !== "tutti" || F.q || ["tipo", "modello", "colore", "prezzo", "dett"].some((k) => F[k].size);
+    return F.genere !== "tutti" || F.q || ["tipo", "modello", "colore", "prezzo", "dett", "taglia"].some((k) => F[k].size);
   }
   function pill(label, pressed, onClick, dot, n) {
     const b = el("button", { class: "pill", "aria-pressed": pressed ? "true" : "false", type: "button" });
@@ -719,7 +735,9 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       const v = effPrice(p);
       return v && v >= FASCE[i][0] && v < FASCE[i][1];
     });
-    multi("#fDett", "dett", [["capp", "Con cappuccio"], ["ras", "Rasata o epilata"], ["disp", "Solo disponibili"]], (p, k) => k === "capp" ? p.capp : k === "ras" ? p.ras : p.stato !== "venduto");
+    if (!F.taglia) F.taglia = new Set();
+    multi("#fTaglia", "taglia", TAGLIE.map((t) => [t, t]), (p, k) => (p.taglia || "42/44") === k);
+    multi("#fDett", "dett", [["new", "Novità"], ["capp", "Con cappuccio"], ["ras", "Rasata o epilata"], ["disp", "Solo disponibili"]], (p, k) => k === "new" ? isNew(p) : k === "capp" ? p.capp : k === "ras" ? p.ras : p.stato !== "venduto");
     $("#clearF").classList.toggle("hidden", !filtersActive());
   }
   const BATCH = 12;
@@ -743,7 +761,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
   function card(p, idx) {
     const c = el("article", { class: "product-card" + (selected.has(p.n) ? " sel" : ""), "data-n": p.n });
     c.style.animationDelay = idx % BATCH * 0.04 + "s";
-    const badge = p.stato === "venduto" ? `<span class="product-badge">${T("sold")}</span>` : p.stato === "nascosto" ? '<span class="product-badge">Nascosto</span>' : "";
+    const badge = p.stato === "venduto" ? `<span class="product-badge">${T("sold")}</span>` : p.stato === "nascosto" ? '<span class="product-badge">Nascosto</span>' : isNew(p) ? `<span class="product-badge new">${T("new")}</span>` : "";
     const pr = priceHTML(p);
     c.innerHTML = `<div class="product-image-container"><img class="product-image" loading="lazy" src="${esc(p.img[0])}" alt="${esc(p.t)}">${badge}${mode === "admin" && adminState.select ? '<span class="check">\u2713</span>' : ""}</div>
     <div class="product-info"><h3 class="product-name">${esc(tt(p).t)}</h3><span class="product-ref">${T("ref")} ${esc(p.n)}</span>${pr ? `<span class="product-price">${pr}</span>` : ""}</div>`;
@@ -828,7 +846,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     });
     const x = tt(p);
     $("#lbTitle").textContent = x.t;
-    $("#lbRef").textContent = T("ref") + " " + p.n;
+    $("#lbRef").textContent = T("ref") + " " + p.n + "  ·  " + T("taglia") + " " + (p.taglia || "42/44");
     $("#lbDesc").textContent = x.d || "";
     const pr = priceHTML(p);
     $("#lbPrice").innerHTML = p.stato === "venduto" ? `<span class="lightbox-price" style="color:#5a5a5a">${T("sold")}</span>` : pr ? `<span class="lightbox-price">${pr}</span>` : "";
@@ -1384,7 +1402,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     var _a;
     const isNew = !p;
     const nextNum = Math.max(...[...BASE, ...custom].map((x) => num(x.n))) + 1;
-    const d = p ? __spreadValues({}, p) : { n: "FIL-" + String(nextNum).padStart(4, "0"), t: "", d: "", g: "donna", tipo: [], ras: false, col: [], mod: "giacca", capp: false, stato: "", img: ["", "", ""], prezzo: null };
+    const d = p ? __spreadValues({}, p) : { n: "FIL-" + String(nextNum).padStart(4, "0"), t: "", d: "", g: "donna", tipo: [], ras: false, col: [], mod: "giacca", capp: false, stato: "", taglia: "42/44", nuovo: true, img: ["", "", ""], prezzo: null };
     const blobs = [null, null, null];
     openModal(`<h3>${isNew ? "Nuovo capo" : "Modifica capo"}</h3>
    ${isNew ? '<div class="field"><label>Foto (fronte, lato, retro)</label><div class="photos" id="ph"></div></div>' : ""}
@@ -1396,6 +1414,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
    <div class="field"><label>Tipo di pelliccia</label><div class="pills" id="eTi"></div></div>
    <div class="field"><label>Modello</label><div class="pills" id="eMo"></div></div>
    <div class="field"><label>Colori</label><div class="pills" id="eCo"></div></div>
+   <div class="field"><label>Taglia</label><select id="eTg">${TAGLIE.map((t) => `<option ${(d.taglia || "42/44") === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
    <div class="field"><label>Dettagli</label><div class="pills" id="eCa"></div></div>
    <div class="actions"><button class="button" data-x>Annulla</button><button class="button solid" id="eSave">Salva</button></div>`);
     const draw = () => {
@@ -1421,6 +1440,10 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       many("#eCo", COLORI, "col", true);
       const ca = $("#eCa");
       ca.innerHTML = "";
+      ca.append(pill("Novità", !!d.nuovo, () => {
+        d.nuovo = !d.nuovo;
+        draw();
+      }));
       ca.append(pill("Con cappuccio", d.capp, () => {
         d.capp = !d.capp;
         draw();
@@ -1452,6 +1475,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     }
     $("#mbox [data-x]").onclick = closeModal;
     $("#eSave").onclick = async () => {
+      d.taglia = $("#eTg").value;
       d.t = $("#eT").value.trim();
       d.d = $("#eD").value.trim();
       const pv = parseFloat($("#eP").value);
@@ -1466,7 +1490,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
           return;
         }
         d.n = $("#eN").value.trim() || d.n;
-        const o = { n: d.n, t: d.t, d: d.d, g: d.g, tipo: d.tipo, ras: !!d.ras, col: d.col, mod: d.mod, capp: d.capp, stato: d.stato, prezzo: d.prezzo, created: Date.now(), views: VISTE.filter((v, k) => blobs[k]), blobs: blobs.filter(Boolean) };
+        const o = { n: d.n, t: d.t, d: d.d, g: d.g, tipo: d.tipo, ras: !!d.ras, col: d.col, mod: d.mod, capp: d.capp, stato: d.stato, taglia: d.taglia, nuovo: !!d.nuovo, prezzo: d.prezzo, created: Date.now(), views: VISTE.filter((v, k) => blobs[k]), blobs: blobs.filter(Boolean) };
         $("#eSave").disabled = true;
         $("#eSave").textContent = "Carico le foto\u2026";
         try {
@@ -1486,12 +1510,12 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       } else if (p.custom) {
         const all = await storeAll();
         const o = all.find((x) => x.n === p.n);
-        Object.assign(o, { t: d.t, d: d.d, g: d.g, tipo: d.tipo, ras: !!d.ras, col: d.col, mod: d.mod, capp: d.capp, stato: d.stato, prezzo: d.prezzo });
+        Object.assign(o, { t: d.t, d: d.d, g: d.g, tipo: d.tipo, ras: !!d.ras, col: d.col, mod: d.mod, capp: d.capp, stato: d.stato, taglia: d.taglia, nuovo: !!d.nuovo, prezzo: d.prezzo });
         await storePut(o);
         custom = custom.map((x) => x.n === p.n ? hydrate(o) : x);
         toast("Modifiche salvate");
       } else {
-        edits[p.n] = { t: d.t, d: d.d, g: d.g, tipo: d.tipo, ras: !!d.ras, col: d.col, mod: d.mod, capp: d.capp, stato: d.stato };
+        edits[p.n] = { t: d.t, d: d.d, g: d.g, tipo: d.tipo, ras: !!d.ras, col: d.col, mod: d.mod, capp: d.capp, stato: d.stato, taglia: d.taglia, nuovo: !!d.nuovo };
         if (d.prezzo != null) prices[p.n] = d.prezzo;
         else delete prices[p.n];
         persist();
@@ -1580,7 +1604,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     }, 200);
   };
   $("#clearF").onclick = () => {
-    ["tipo", "modello", "colore", "prezzo", "dett"].forEach((k) => F[k].clear());
+    ["tipo", "modello", "colore", "prezzo", "dett", "taglia"].forEach((k) => F[k].clear());
     F.genere = "tutti";
     F.q = "";
     $("#search").value = "";
