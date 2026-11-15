@@ -430,7 +430,10 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     return x ? { t: x[0], d: x[1] } : { t: p.t, d: p.d };
   };
   const VISTE = ["fronte", "lato", "retro"];
-  const TAGLIE = ["38/40", "40/42", "42/44", "44/46", "46/48", "48/50"];
+  const TAGLIE_D = ["38/40", "40/42", "42/44", "44/46", "46/48", "48/50"];
+  const TAGLIE_U = ["46", "46/48", "48", "48/50", "50", "50/52", "52", "52/54", "54", "54/56", "56"];
+  const TAGLIE = [...TAGLIE_D, ...TAGLIE_U.filter((t) => !TAGLIE_D.includes(t))];
+  const tagliaDi = (p) => p.taglia || ((p.g || "donna") === "uomo" ? "50" : "42/44");
   const lbl = (arr, k) => T(k);
   const BASE = (window.CATALOGO || []).map((p) => __spreadProps(__spreadValues({}, p), { custom: false }));
   let custom = [];
@@ -676,7 +679,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     if (F.tipo.size && !(p.tipo || []).some((t) => F.tipo.has(t))) return false;
     if (F.modello.size && !F.modello.has(p.mod)) return false;
     if (F.colore.size && !(p.col || []).some((c) => F.colore.has(c))) return false;
-    if (F.taglia && F.taglia.size && !F.taglia.has(p.taglia || "42/44")) return false;
+    if (F.taglia && F.taglia.size && !F.taglia.has(tagliaDi(p))) return false;
     if (F.dett.has("new") && !isNew(p)) return false;
     if (F.dett.has("capp") && !p.capp) return false;
     if (F.dett.has("ras") && !p.ras) return false;
@@ -739,7 +742,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
       return v && v >= FASCE[i][0] && v < FASCE[i][1];
     });
     if (!F.taglia) F.taglia = new Set();
-    multi("#fTaglia", "taglia", TAGLIE.map((t) => [t, t]), (p, k) => (p.taglia || "42/44") === k);
+    multi("#fTaglia", "taglia", TAGLIE.map((t) => [t, t]), (p, k) => tagliaDi(p) === k);
     multi("#fDett", "dett", [["new", "Novità"], ["capp", "Con cappuccio"], ["ras", "Rasata o epilata"], ["disp", "Solo disponibili"]], (p, k) => k === "new" ? isNew(p) : k === "capp" ? p.capp : k === "ras" ? p.ras : p.stato !== "venduto");
     $("#clearF").classList.toggle("hidden", !filtersActive());
   }
@@ -865,7 +868,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
     });
     const x = tt(p);
     $("#lbTitle").textContent = x.t;
-    $("#lbRef").textContent = T("ref") + " " + p.n + "  ·  " + T("taglia") + " " + (p.taglia || "42/44");
+    $("#lbRef").textContent = T("ref") + " " + p.n + "  ·  " + T("taglia") + " " + tagliaDi(p);
     $("#lbDesc").textContent = x.d || "";
     const pr = priceHTML(p);
     $("#lbPrice").innerHTML = p.stato === "venduto" ? `<span class="lightbox-price" style="color:#5a5a5a">${T("sold")}</span>` : pr ? `<span class="lightbox-price">${pr}</span>` : "";
@@ -1434,7 +1437,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
    <div class="field"><label>Tipo di pelliccia</label><div class="pills" id="eTi"></div></div>
    <div class="field"><label>Modello</label><div class="pills" id="eMo"></div></div>
    <div class="field"><label>Colori</label><div class="pills" id="eCo"></div></div>
-   <div class="field"><label>Taglia</label><select id="eTg">${TAGLIE.map((t) => `<option ${(d.taglia || "42/44") === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
+   <div class="field"><label>Taglia</label><select id="eTg">${(d.g === "uomo" ? TAGLIE_U : TAGLIE_D).map((t) => `<option ${tagliaDi(d) === t ? "selected" : ""}>${t}</option>`).join("")}</select></div>
    <div class="field"><label>Dettagli</label><div class="pills" id="eCa"></div></div>
    <div class="actions"><button class="button" data-x>Annulla</button><button class="button solid" id="eSave">Salva</button></div>`);
     const draw = () => {
@@ -1455,6 +1458,7 @@ var __spreadProps = (a, b) => __defProps(a, __getOwnPropDescs(b));
         }, dot ? v[2] : null)));
       };
       one("#eG", [["donna", "Donna"], ["uomo", "Uomo"]], "g");
+      const tg = $("#eTg"); if (tg) { const list = d.g === "uomo" ? TAGLIE_U : TAGLIE_D; if (!list.includes(tg.value)) { tg.innerHTML = list.map((t) => `<option ${t === (d.g === "uomo" ? "50" : "42/44") ? "selected" : ""}>${t}</option>`).join(""); } }
       many("#eTi", TIPI, "tipo");
       one("#eMo", MODELLI, "mod");
       many("#eCo", COLORI, "col", true);
